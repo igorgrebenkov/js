@@ -78,7 +78,6 @@
                 ruleField.addEventListener(
                     "keyup",
                     function(e) {
-                        console.log("test");
                         if (e.key === "Enter") {
                             run();
                         }
@@ -94,6 +93,7 @@
                 rowCnt = 0;
                 genField.value = numGenerations;
                 messageDiv.innerHTML = "";
+                runBtn.disabled = false;
                 board = new Array(canvas.height/pHeight);
                 boardBuf = new Array(canvas.height/pHeight);
 
@@ -118,12 +118,15 @@
 
             function run() {
                 ruleField.readOnly = true;
+                runBtn.disabled = true;
+                stopBtn.disabled = false;
                 interval = setInterval(
                     function() {
                         generation();
                         draw();
 
                         if (rowCnt === board.length - 2) {
+                            messageDiv.innerHTML += "Done!";
                             stop();
                         }
                     }, 
@@ -131,8 +134,8 @@
             }
 
             function stop() {
+                runBtn.disabled = false;
                 ruleField.readOnly = false;
-                messageDiv.innerHTML += "Done!";
                 clearInterval(interval);
             }
 
@@ -173,6 +176,7 @@
                             break;
                     }
                 }
+
                 numGenerations++;
                 rowCnt++;
                 genField.value = numGenerations.toString();
@@ -196,8 +200,9 @@
 
     <body>
         <div id="mainDiv">
+            <h1>Elementary Cellular Automata</h1>
             <div id="boardDiv">
-                <canvas id="boardCanvas" height="600" width="1000"></canvas>
+                <canvas id="boardCanvas" height="1100" width="1800"></canvas>
             </div>
             <div id="controlDiv">
                     <input id="runBtn" type="button" value="Run">

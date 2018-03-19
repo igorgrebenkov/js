@@ -28,7 +28,12 @@
 
             input[type=button]
             {
-                width: 60px;
+                width: 70px;
+            }
+
+            #probabilityRange
+            {
+                direction: rtl;
             }
 
             #ruleField {
@@ -37,7 +42,6 @@
         </style>
         <script>
             var board;          // 2D game board array
-            var boardBuf;       // board buffer
             var rule;           // rule string
             var canvas;         // game canvas
             var context;        // canvas context
@@ -45,29 +49,39 @@
             var rowCnt;         // counts how many rows we've generated
             var numGenerations; // counter for number of generations
             var pHeight = 1;    // height of a square cell
-            
+
             var genField;       // input field for displaying numGenerations
             var ruleField;      // input field for rule number
+            var probRange;      // input range slider for random probability
             var messageDiv;     // div used to display messages
 
             const COLOR_OFF = "black";
             const COLOR_ON = "limegreen";
+            const COLOR_ARR = ["red", "blue", "limegreen", "orange", "purple"]
 
             function start() {
                 canvas = document.getElementById("boardCanvas");
                 context = canvas.getContext("2d");
                 genField = document.getElementById("genField");
                 ruleField = document.getElementById("ruleField");
+                probRange = document.getElementById("probabilityRange");
                 messageDiv = document.getElementById("messageDiv");
             
                 var runBtn = document.getElementById("runBtn");
                 var stopBtn = document.getElementById("stopBtn");
                 var stepBtn = document.getElementById("stepBtn");
                 var resetBtn = document.getElementById("resetBtn");
+                var randomBtn = document.getElementById("randomBtn");
 
                 runBtn.addEventListener("click", run, false);
                 stopBtn.addEventListener("click", stop, false);
-                stepBtn.addEventListener("click", function() { generation(); draw(); }, false);
+                stepBtn.addEventListener(
+                    "click", 
+                    function() { 
+                        generation(); 
+                    }, 
+                    false);
+                randomBtn.addEventListener("click", random, false);
                 resetBtn.addEventListener(
                     "click", 
                     function() {
@@ -75,6 +89,7 @@
                         init();
                     },
                     false);
+                ruleField.addEventListener("change", init, false);
                 ruleField.addEventListener(
                     "keyup",
                     function(e) {
@@ -85,7 +100,6 @@
                     false);
 
                 init();
-                ruleField.addEventListener("change", init, false);
             }
 
             function init() {
@@ -95,14 +109,11 @@
                 messageDiv.innerHTML = "";
                 runBtn.disabled = false;
                 board = new Array(canvas.height/pHeight);
-                boardBuf = new Array(canvas.height/pHeight);
 
                 for (var i = 0; i < board.length; i++) {
                     board[i] = new Array(canvas.width/pHeight);
-                    boardBuf[i] = new Array(canvas.width/pHeight);
                     for (var j = 0; j < board[i].length; j++) {
                         board[i][j] = 0;
-                        boardBuf[i][j] = 0;
                     }
                 }
 
@@ -123,8 +134,6 @@
                 interval = setInterval(
                     function() {
                         generation();
-                        draw();
-
                         if (rowCnt === board.length - 2) {
                             messageDiv.innerHTML += "Done!";
                             stop();
@@ -175,6 +184,9 @@
                             board[i+1][j] = parseInt(rule.charAt(7));
                             break;
                     }
+                    context.fillStyle = 
+                        board[i+1][j] === 0 ? COLOR_OFF : COLOR_ON;
+                    context.fillRect(j*pHeight, i*pHeight, pHeight, pHeight);
                 }
 
                 numGenerations++;
@@ -182,15 +194,18 @@
                 genField.value = numGenerations.toString();
             }
 
-            function draw() {
-                var i = rowCnt;
-                for (var j = 0; j < board[i].length; j++) {
-                    if (board[i][j] === 0) {
-                        context.fillStyle = COLOR_OFF;
-                    } else {
+            function random() {
+                for (var j = 0; j < board[0].length; j++) {
+                    console.log(parseInt(probRange.value));
+                    var rand = Math.floor(
+                        (Math.random() * parseInt(probRange.value)) + 1);
+                    
+                    if (rand === 1) {
+                        board[0][j] = 1;
                         context.fillStyle = COLOR_ON;
+                        context.fillRect(j*pHeight, 0, pHeight, pHeight);
                     }
-                    context.fillRect(j*pHeight, i*pHeight, pHeight, pHeight);
+
                 }
             }
 
@@ -202,18 +217,21 @@
         <div id="mainDiv">
             <h1>Elementary Cellular Automata</h1>
             <div id="boardDiv">
-                <canvas id="boardCanvas" height="1100" width="1800"></canvas>
+                <canvas id="boardCanvas" height="1000" width="1600"></canvas>
             </div>
             <div id="controlDiv">
                     <input id="runBtn" type="button" value="Run">
                     <input id="stopBtn" type="button" value="Stop">
                     <input id="stepBtn" type="button" value="Step">
+                    <input id="randomBtn" type="button" value="Random">
                     <input id="resetBtn" type="button" value="Reset">
                 <p>
                     <label for="ruleField">Rule</label>
-                    <input id="ruleField" type="number" value="30" min="0" max="255"> 
+                    <input id="ruleField" type="number" value="18" min="0" max="255"> 
                     <label for="genField">Generations</label>
                     <input id="genField" type="number" min="0" max="1000" readonly>
+                    <label for="probabilityRange"></label> 
+                    <input id="probabilityRange" type="range" min="2" max="1000" value="1">
                 </p>
                 <div id="messageDiv"></div>
             </div>

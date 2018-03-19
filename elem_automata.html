@@ -1,0 +1,216 @@
+<!DOCTYPE html> 
+
+<html> 
+    <head> 
+        <meta charset = "utf-8"> 
+        <title>Elementary Cellular Automata</title> 
+        <style>
+            body
+            {
+                background: white;
+            }
+
+            div
+            {
+                text-align: center;
+            }
+
+            #controlDiv 
+            {
+                border: 1px solid black;
+                display: inline-block;
+                padding: 3px 5px 0px 5px;
+            }
+            #messageDiv
+            {
+                font-weight: bold;
+            }
+
+            input[type=button]
+            {
+                width: 60px;
+            }
+
+            #ruleField {
+                text-align: right;
+            }
+        </style>
+        <script>
+            var board;          // 2D game board array
+            var boardBuf;       // board buffer
+            var rule;           // rule string
+            var canvas;         // game canvas
+            var context;        // canvas context
+            var interval;       // refresh interval
+            var rowCnt;         // counts how many rows we've generated
+            var numGenerations; // counter for number of generations
+            var pHeight = 1;    // height of a square cell
+            
+            var genField;       // input field for displaying numGenerations
+            var ruleField;      // input field for rule number
+            var messageDiv;     // div used to display messages
+
+            const COLOR_OFF = "black";
+            const COLOR_ON = "limegreen";
+
+            function start() {
+                canvas = document.getElementById("boardCanvas");
+                context = canvas.getContext("2d");
+                genField = document.getElementById("genField");
+                ruleField = document.getElementById("ruleField");
+                messageDiv = document.getElementById("messageDiv");
+            
+                var runBtn = document.getElementById("runBtn");
+                var stopBtn = document.getElementById("stopBtn");
+                var stepBtn = document.getElementById("stepBtn");
+                var resetBtn = document.getElementById("resetBtn");
+
+                runBtn.addEventListener("click", run, false);
+                stopBtn.addEventListener("click", stop, false);
+                stepBtn.addEventListener("click", function() { generation(); draw(); }, false);
+                resetBtn.addEventListener(
+                    "click", 
+                    function() {
+                        stop();
+                        init();
+                    },
+                    false);
+                ruleField.addEventListener(
+                    "keyup",
+                    function(e) {
+                        console.log("test");
+                        if (e.key === "Enter") {
+                            run();
+                        }
+                    },
+                    false);
+
+                init();
+                ruleField.addEventListener("change", init, false);
+            }
+
+            function init() {
+                numGenerations = 0;
+                rowCnt = 0;
+                genField.value = numGenerations;
+                messageDiv.innerHTML = "";
+                board = new Array(canvas.height/pHeight);
+                boardBuf = new Array(canvas.height/pHeight);
+
+                for (var i = 0; i < board.length; i++) {
+                    board[i] = new Array(canvas.width/pHeight);
+                    boardBuf[i] = new Array(canvas.width/pHeight);
+                    for (var j = 0; j < board[i].length; j++) {
+                        board[i][j] = 0;
+                        boardBuf[i][j] = 0;
+                    }
+                }
+
+                var ruleField = document.getElementById("ruleField");
+                rule = parseInt(ruleField.value).toString(2).padStart(8, "0");
+
+                context.fillStyle = COLOR_OFF;
+                context.fillRect(0, 0, canvas.width, canvas.height);
+                context.fillStyle = COLOR_ON;
+                board[0][(canvas.width / 2) / pHeight] = 1;
+                context.fillRect((canvas.width / 2), 0, pHeight, pHeight);
+            }
+
+            function run() {
+                ruleField.readOnly = true;
+                interval = setInterval(
+                    function() {
+                        generation();
+                        draw();
+
+                        if (rowCnt === board.length - 2) {
+                            stop();
+                        }
+                    }, 
+                    0);
+            }
+
+            function stop() {
+                ruleField.readOnly = false;
+                messageDiv.innerHTML += "Done!";
+                clearInterval(interval);
+            }
+
+            function generation() {
+                var i = rowCnt;
+                for (var j = 0; j < board[i].length; j++) {
+                    var n = board[i].length - 1;
+                    var j_left = (((j - 1) % n) + n) % n
+                    var j_right = (j + 1) % n;
+                    var tripletState = board[i][j_left].toString()
+                        + board[i][j].toString()
+                        + board[i][j_right].toString();
+
+                    switch (tripletState) {
+                        case "111":
+                            board[i+1][j] = parseInt(rule.charAt(0));
+                            break;
+                        case "110":
+                            board[i+1][j] = parseInt(rule.charAt(1));
+                            break;
+                        case "101":
+                            board[i+1][j] = parseInt(rule.charAt(2));
+                            break;
+                        case "100":
+                            board[i+1][j] = parseInt(rule.charAt(3));
+                            break;
+                        case "011":
+                            board[i+1][j] = parseInt(rule.charAt(4));
+                            break;
+                        case "010":
+                            board[i+1][j] = parseInt(rule.charAt(5));
+                            break;
+                        case "001":
+                            board[i+1][j] = parseInt(rule.charAt(6));
+                            break;
+                        case "000":
+                            board[i+1][j] = parseInt(rule.charAt(7));
+                            break;
+                    }
+                }
+                numGenerations++;
+                rowCnt++;
+                genField.value = numGenerations.toString();
+            }
+
+            function draw() {
+                var i = rowCnt;
+                for (var j = 0; j < board[i].length; j++) {
+                    if (board[i][j] === 0) {
+                        context.fillStyle = COLOR_OFF;
+                    } else {
+                        context.fillStyle = COLOR_ON;
+                    }
+                    context.fillRect(j*pHeight, i*pHeight, pHeight, pHeight);
+                }
+            }
+
+            window.addEventListener("load", start, false);
+        </script>
+    </head>
+
+    <body>
+        <div id="mainDiv">
+            <div id="boardDiv">
+                <canvas id="boardCanvas" height="600" width="1000"></canvas>
+            </div>
+            <div id="controlDiv">
+                    <input id="runBtn" type="button" value="Run">
+                    <input id="stopBtn" type="button" value="Stop">
+                    <input id="stepBtn" type="button" value="Step">
+                    <input id="resetBtn" type="button" value="Reset">
+                <p>
+                    <label for="ruleField">Rule</label>
+                    <input id="ruleField" type="number" value="30" min="0" max="255"> 
+                    <label for="genField">Generations</label>
+                    <input id="genField" type="number" min="0" max="1000" readonly>
+                </p>
+                <div id="messageDiv"></div>
+            </div>
+        </div>
+    </body>

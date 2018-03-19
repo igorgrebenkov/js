@@ -21,10 +21,6 @@
                 display: inline-block;
                 padding: 3px 5px 0px 5px;
             }
-            #messageDiv
-            {
-                font-weight: bold;
-            }
 
             input[type=button]
             {
@@ -48,24 +44,26 @@
             var interval;       // refresh interval
             var rowCnt;         // counts how many rows we've generated
             var numGenerations; // counter for number of generations
-            var pHeight = 1;    // height of a square cell
+            var pHeight = 1;   // height of a square cell
 
             var genField;       // input field for displaying numGenerations
             var ruleField;      // input field for rule number
             var probRange;      // input range slider for random probability
-            var messageDiv;     // div used to display messages
 
             const COLOR_OFF = "black";
-            const COLOR_ON = "limegreen";
+            const COLOR_ON = "yellow";
             const COLOR_ARR = ["red", "blue", "limegreen", "orange", "purple"]
 
+            /*
+             * Initializes references to document elements and
+             * registers their event listeners before calling init().
+             */
             function start() {
                 canvas = document.getElementById("boardCanvas");
                 context = canvas.getContext("2d");
                 genField = document.getElementById("genField");
                 ruleField = document.getElementById("ruleField");
                 probRange = document.getElementById("probabilityRange");
-                messageDiv = document.getElementById("messageDiv");
             
                 var runBtn = document.getElementById("runBtn");
                 var stopBtn = document.getElementById("stopBtn");
@@ -81,7 +79,6 @@
                         generation(); 
                     }, 
                     false);
-                randomBtn.addEventListener("click", random, false);
                 resetBtn.addEventListener(
                     "click", 
                     function() {
@@ -89,6 +86,7 @@
                         init();
                     },
                     false);
+                randomBtn.addEventListener("click", random, false);
                 ruleField.addEventListener("change", init, false);
                 ruleField.addEventListener(
                     "keyup",
@@ -102,62 +100,80 @@
                 init();
             }
 
+            /*
+             * Initializes the game state and draws a blank canvas.
+             */
             function init() {
+                stop(); // stop any existing run
+
                 numGenerations = 0;
                 rowCnt = 0;
                 genField.value = numGenerations;
-                messageDiv.innerHTML = "";
-                runBtn.disabled = false;
-                board = new Array(canvas.height/pHeight);
+                runBtn.disabled = false; 
 
+                // init board
+                board = new Array(Math.floor(canvas.height/pHeight));
                 for (var i = 0; i < board.length; i++) {
-                    board[i] = new Array(canvas.width/pHeight);
+                    board[i] = new Array(Math.floor(canvas.width/pHeight));
                     for (var j = 0; j < board[i].length; j++) {
                         board[i][j] = 0;
                     }
                 }
 
-                var ruleField = document.getElementById("ruleField");
-                rule = parseInt(ruleField.value).toString(2).padStart(8, "0");
-
+                // fill the whole board with COLOR_OFF 
                 context.fillStyle = COLOR_OFF;
                 context.fillRect(0, 0, canvas.width, canvas.height);
                 context.fillStyle = COLOR_ON;
-                board[0][(canvas.width / 2) / pHeight] = 1;
-                context.fillRect((canvas.width / 2), 0, pHeight, pHeight);
+
+                // get rule for next generation
+                rule = parseInt(ruleField.value).toString(2).padStart(8, "0");
+
+                // draw initial ON cell at middle of top row
+                var init_j = Math.floor((canvas.width / 2) / pHeight);
+                board[0][init_j] = 1;
+                context.fillRect(init_j * pHeight, 0, pHeight, pHeight);
             }
 
+            /*
+             * Runs the simulation to completion.
+             */ 
             function run() {
-                ruleField.readOnly = true;
                 runBtn.disabled = true;
                 stopBtn.disabled = false;
                 interval = setInterval(
                     function() {
                         generation();
                         if (rowCnt === board.length - 2) {
-                            messageDiv.innerHTML += "Done!";
                             stop();
                         }
                     }, 
                     0);
             }
 
+            /*
+             * Stops the simulation.
+             */ 
             function stop() {
-                runBtn.disabled = false;
-                ruleField.readOnly = false;
                 clearInterval(interval);
             }
 
+            /*
+             * Computes and draws one generation.
+             */
             function generation() {
                 var i = rowCnt;
                 for (var j = 0; j < board[i].length; j++) {
                     var n = board[i].length - 1;
                     var j_left = (((j - 1) % n) + n) % n
                     var j_right = (j + 1) % n;
+
+                    // create the string that represents the state 
+                    // of the current cell and its neighbors
                     var tripletState = board[i][j_left].toString()
                         + board[i][j].toString()
                         + board[i][j_right].toString();
 
+                    // update the cell's state based on the current rule
                     switch (tripletState) {
                         case "111":
                             board[i+1][j] = parseInt(rule.charAt(0));
@@ -184,9 +200,17 @@
                             board[i+1][j] = parseInt(rule.charAt(7));
                             break;
                     }
+                    var rand = Math.floor(Math.random() * 5);
+
+                    // if a square is ON in the next generation, draw it 
+                    if (board[i+1][j] === 1) {
+                        context.fillStyle = COLOR_ON;
+                        context.fillRect(j*pHeight, (i+1)*pHeight, pHeight, pHeight);
+                    }
+                    /*
                     context.fillStyle = 
-                        board[i+1][j] === 0 ? COLOR_OFF : COLOR_ON;
-                    context.fillRect(j*pHeight, i*pHeight, pHeight, pHeight);
+                    board[i+1][j] === 0 ? COLOR_OFF : COLOR_ARR[rand];
+                    */
                 }
 
                 numGenerations++;
@@ -194,9 +218,14 @@
                 genField.value = numGenerations.toString();
             }
 
+            /*
+             * Seeds the first row with cells randomly with 
+             * probability 1/probRange.value, and then
+             * starts a run. 
+             */ 
             function random() {
+                init();
                 for (var j = 0; j < board[0].length; j++) {
-                    console.log(parseInt(probRange.value));
                     var rand = Math.floor(
                         (Math.random() * parseInt(probRange.value)) + 1);
                     
@@ -207,6 +236,7 @@
                     }
 
                 }
+                run();
             }
 
             window.addEventListener("load", start, false);
@@ -223,17 +253,16 @@
                     <input id="runBtn" type="button" value="Run">
                     <input id="stopBtn" type="button" value="Stop">
                     <input id="stepBtn" type="button" value="Step">
-                    <input id="randomBtn" type="button" value="Random">
                     <input id="resetBtn" type="button" value="Reset">
+                    <input id="randomBtn" type="button" value="Random">
                 <p>
                     <label for="ruleField">Rule</label>
                     <input id="ruleField" type="number" value="18" min="0" max="255"> 
                     <label for="genField">Generations</label>
                     <input id="genField" type="number" min="0" max="1000" readonly>
                     <label for="probabilityRange"></label> 
-                    <input id="probabilityRange" type="range" min="2" max="1000" value="1">
+                    <input id="probabilityRange" type="range" min="2" max="1000" value="100">
                 </p>
-                <div id="messageDiv"></div>
             </div>
         </div>
     </body>

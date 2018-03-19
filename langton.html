@@ -1,0 +1,134 @@
+<!DOCTYPE html> 
+<!-- Fig. 14.12: imagemanipulation.html --> 
+<!-- Manipulating an image’s pixels to change colors and transparency. --> 
+<html> 
+    <head> 
+        <meta charset = "utf-8"> 
+        <title>Manipulating an Image</title> 
+        <style>
+            body
+            {
+                background: white;
+            }
+
+            #boardDiv 
+            {
+                text-align: center;
+            }
+        </style>
+        <script>
+            var canvas; 
+            var context;  
+            var antXY;
+            var antDir;
+            var interval;
+            var numGenerations;
+            var genField;
+            var board = [];
+            var pHeight = 1;
+
+            const COLOR1 = "black";
+            const COLOR2 = "yellow";
+
+            function start() {
+                canvas = document.getElementById("boardCanvas");
+                context = canvas.getContext("2d");
+                genField = document.getElementById("genField");
+            
+                var runBtn = document.getElementById("runBtn");
+                var stopBtn = document.getElementById("stopBtn");
+                var stepBtn = document.getElementById("stepBtn");
+                var resetBtn = document.getElementById("resetBtn");
+
+                runBtn.addEventListener("click", run, false);
+                stopBtn.addEventListener("click", stop, false);
+                stepBtn.addEventListener("click", move, false);
+                resetBtn.addEventListener(
+                    "click", 
+                    function() {
+                        stop();
+                        init();
+                    },
+                    false);
+
+                init();
+            }
+
+            function init() {
+                antXY = [canvas.width/2, canvas.height/2];
+                antDir = 3;
+                numGenerations = 0;
+                genField.value = numGenerations;
+
+                for (var i = 0; i <= canvas.height; i += pHeight) {
+                    for (var j = 0; j <= canvas.width; j += pHeight) {
+                        var key = i + "," + j;
+                        board[key] = true;
+                    }
+                }
+                context.fillStyle = COLOR1;
+                context.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            function run() {
+                interval = setInterval(move, 0);
+            }
+
+            function stop() {
+                clearInterval(interval);
+            }
+
+            function move() {
+                var key = antXY[0] + "," + antXY[1];
+
+                if (board[key]) {
+                    antDir = (antDir + 1) % 4;
+                    board[key] = false;
+                    context.fillStyle = COLOR2;
+                } else {
+                    antDir = (((antDir - 1) % 4) + 4) % 4;
+                    board[key] = true;
+                    context.fillStyle = COLOR1;
+                }
+
+                context.fillRect(antXY[0], antXY[1], pHeight, pHeight);
+
+                switch (antDir) {
+                    case 0:
+                        antXY[1] -= pHeight;
+                        break;
+                    case 1:
+                        antXY[0] += pHeight;
+                        break;
+                    case 2:
+                        antXY[1] += pHeight;
+                        break;
+                    case 3:
+                        antXY[0] -= pHeight;
+                        break;
+                }
+
+                antXY[0] = ((antXY[0] % canvas.width) + canvas.width) % canvas.width;
+                antXY[1] = ((antXY[1] % canvas.height) + canvas.height) % canvas.height;
+                context.fillStyle = "red";
+                context.fillRect(antXY[0], antXY[1], pHeight, pHeight);
+
+                numGenerations++;
+                genField.value = numGenerations;
+            }
+
+            window.addEventListener("load", start, false);
+        </script>
+    </head>
+
+    <body>
+        <div id="boardDiv">
+            <canvas id="boardCanvas" height="500" width="800"></canvas>
+            <br>
+            <input id="runBtn" type="button" value="Run">
+            <input id="stopBtn" type="button" value="Stop">
+            <input id="stepBtn" type="button" value="Step">
+            <input id="resetBtn" type="button" value="Reset">
+            <input id="genField" type="number">
+        </div>
+    </body>

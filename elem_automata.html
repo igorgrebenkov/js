@@ -26,14 +26,22 @@
             {
                 width: 70px;
             }
+            
+            #ruleField            
+            {
+                text-align: center;
+                height: 30px;
+            } 
+
+            #ruleField::-webkit-inner-spin-button {
+                padding: 1px;
+                opacity: 1;
+                height: 30px;
+            } 
 
             #probabilityRange
             {
                 direction: rtl;
-            }
-
-            #ruleField {
-                text-align: right;
             }
         </style>
         <script>
@@ -52,7 +60,7 @@
 
             const COLOR_OFF = "black";
             const COLOR_ON = "yellow";
-            const COLOR_ARR = ["red", "blue", "limegreen", "orange", "purple"]
+            const COLOR_ARR = ["red", "orange", "pink", "green", "blue", "indigo", "violet", "yellow"];
 
             /*
              * Initializes references to document elements and
@@ -173,44 +181,49 @@
                         + board[i][j].toString()
                         + board[i][j_right].toString();
 
+                    var color_i;
                     // update the cell's state based on the current rule
                     switch (tripletState) {
                         case "111":
                             board[i+1][j] = parseInt(rule.charAt(0));
+                            color_i = 0;
                             break;
                         case "110":
                             board[i+1][j] = parseInt(rule.charAt(1));
+                            color_i = 1;
                             break;
                         case "101":
                             board[i+1][j] = parseInt(rule.charAt(2));
+                            color_i = 2;
                             break;
                         case "100":
                             board[i+1][j] = parseInt(rule.charAt(3));
+                            color_i = 3;
                             break;
                         case "011":
                             board[i+1][j] = parseInt(rule.charAt(4));
+                            color_i = 4;
                             break;
                         case "010":
                             board[i+1][j] = parseInt(rule.charAt(5));
+                            color_i = 5;
                             break;
                         case "001":
                             board[i+1][j] = parseInt(rule.charAt(6));
+                            color_i = 6;
                             break;
                         case "000":
                             board[i+1][j] = parseInt(rule.charAt(7));
+                            color_i = 7;
                             break;
                     }
-                    var rand = Math.floor(Math.random() * 5);
 
                     // if a square is ON in the next generation, draw it 
                     if (board[i+1][j] === 1) {
-                        context.fillStyle = COLOR_ON;
+                        context.fillStyle = board[i+1][j] === 0 ? COLOR_OFF : COLOR_ARR[color_i];
                         context.fillRect(j*pHeight, (i+1)*pHeight, pHeight, pHeight);
+
                     }
-                    /*
-                    context.fillStyle = 
-                    board[i+1][j] === 0 ? COLOR_OFF : COLOR_ARR[rand];
-                    */
                 }
 
                 numGenerations++;
@@ -264,5 +277,13 @@
                     <input id="probabilityRange" type="range" min="2" max="1000" value="100">
                 </p>
             </div>
+            <p>
+                22, 30, 45, 50, 54, <strong>57</strong>, 58, 60, 61, 62, 73, 75, 86, 89, 94, 99, 
+                101, 102, <strong>105</strong>, 107, 109, 110, 118, 124, 129, 131, 133, 135, 137, 
+                141, 145, 147, 149, 150, 153, 158, 161, 163, 169, 182, 190, 193, 
+                195, 214, 225, 246, 254
+                <br>
+                <a href="https://plato.stanford.edu/entries/cellular-automata/supplement.html">Rules</a>
+            </p>
         </div>
     </body>

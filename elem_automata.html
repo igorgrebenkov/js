@@ -27,13 +27,14 @@
                 width: 70px;
             }
             
-            #ruleField            
+            #ruleField, #cHeightField           
             {
                 text-align: center;
                 height: 30px;
             } 
 
-            #ruleField::-webkit-inner-spin-button {
+            #ruleField::-webkit-inner-spin-button,
+            #cHeightField::-webkit-inner-spin-button {
                 padding: 1px;
                 opacity: 1;
                 height: 30px;
@@ -52,14 +53,15 @@
             var interval;       // refresh interval
             var rowCnt;         // counts how many rows we've generated
             var numGenerations; // counter for number of generations
-            var pHeight = 1;   // height of a square cell
+            var cHeight;    // height of a square cell
 
-            var genField;       // input field for displaying numGenerations
             var ruleField;      // input field for rule number
+            var cHeightField    // input field for cell height
+            var genField;       // input field for displaying numGenerations
             var probRange;      // input range slider for random probability
 
             const COLOR_OFF = "black";
-            const COLOR_ON = "yellow";
+            const COLOR_ON = "green";
             const COLOR_ARR = ["red", "orange", "pink", "green", "blue", "indigo", "violet", "yellow"];
 
             /*
@@ -72,7 +74,9 @@
                 genField = document.getElementById("genField");
                 ruleField = document.getElementById("ruleField");
                 probRange = document.getElementById("probabilityRange");
-            
+                cHeightField = document.getElementById("cHeightField");
+                cHeight = parseInt(cHeightField.value);
+
                 var runBtn = document.getElementById("runBtn");
                 var stopBtn = document.getElementById("stopBtn");
                 var stepBtn = document.getElementById("stepBtn");
@@ -104,7 +108,23 @@
                         }
                     },
                     false);
-
+                cHeightField.addEventListener(
+                    "change",
+                    function() {
+                        cHeight = parseInt(cHeightField.value);
+                        runBtn.disabled = false;
+                        init();
+                    },
+                    false);
+                cHeightField.addEventListener(
+                    "keyup",
+                    function(e) {
+                        if (e.key === "Enter") {
+                            run();
+                        }
+                    },
+                    false);
+                
                 init();
             }
 
@@ -118,28 +138,24 @@
                 rowCnt = 0;
                 genField.value = numGenerations;
                 runBtn.disabled = false; 
+                fillCanvas();
 
                 // init board
-                board = new Array(Math.floor(canvas.height/pHeight));
+                board = new Array(Math.floor(canvas.height/cHeight));
                 for (var i = 0; i < board.length; i++) {
-                    board[i] = new Array(Math.floor(canvas.width/pHeight));
+                    board[i] = new Array(Math.floor(canvas.width/cHeight));
                     for (var j = 0; j < board[i].length; j++) {
                         board[i][j] = 0;
                     }
                 }
 
-                // fill the whole board with COLOR_OFF 
-                context.fillStyle = COLOR_OFF;
-                context.fillRect(0, 0, canvas.width, canvas.height);
-                context.fillStyle = COLOR_ON;
-
                 // get rule for next generation
                 rule = parseInt(ruleField.value).toString(2).padStart(8, "0");
 
                 // draw initial ON cell at middle of top row
-                var init_j = Math.floor((canvas.width / 2) / pHeight);
+                var init_j = Math.floor((canvas.width / 2) / cHeight);
                 board[0][init_j] = 1;
-                context.fillRect(init_j * pHeight, 0, pHeight, pHeight);
+                context.fillRect(init_j * cHeight, 0, cHeight, cHeight);
             }
 
             /*
@@ -148,6 +164,7 @@
             function run() {
                 runBtn.disabled = true;
                 stopBtn.disabled = false;
+                cHeightField.readOnly = true;
                 interval = setInterval(
                     function() {
                         generation();
@@ -163,6 +180,7 @@
              */ 
             function stop() {
                 clearInterval(interval);
+                cHeightField.readOnly = false;
             }
 
             /*
@@ -221,7 +239,7 @@
                     // if a square is ON in the next generation, draw it 
                     if (board[i+1][j] === 1) {
                         context.fillStyle = board[i+1][j] === 0 ? COLOR_OFF : COLOR_ARR[color_i];
-                        context.fillRect(j*pHeight, (i+1)*pHeight, pHeight, pHeight);
+                        context.fillRect(j*cHeight, (i+1)*cHeight, cHeight, cHeight);
 
                     }
                 }
@@ -229,6 +247,15 @@
                 numGenerations++;
                 rowCnt++;
                 genField.value = numGenerations.toString();
+            }
+
+            /*
+             * Fills the whole canvas with COLOR_OFF.
+             */ 
+            function fillCanvas() {
+                context.fillStyle = COLOR_OFF;
+                context.fillRect(0, 0, canvas.width, canvas.height);
+                context.fillStyle = COLOR_ON;
             }
 
             /*
@@ -245,7 +272,7 @@
                     if (rand === 1) {
                         board[0][j] = 1;
                         context.fillStyle = COLOR_ON;
-                        context.fillRect(j*pHeight, 0, pHeight, pHeight);
+                        context.fillRect(j*cHeight, 0, cHeight, cHeight);
                     }
 
                 }
@@ -271,6 +298,8 @@
                 <p>
                     <label for="ruleField">Rule</label>
                     <input id="ruleField" type="number" value="18" min="0" max="255"> 
+                    <label for="cHeightField">Cell Height</label>
+                    <input id="cHeightField" type="number" value="1" min="1" max="50"> 
                     <label for="genField">Generations</label>
                     <input id="genField" type="number" min="0" max="1000" readonly>
                     <label for="probabilityRange"></label> 
